@@ -30,22 +30,22 @@ public:
   Logger *pLogger = NULL; // Create the object pointer for Logger Class
 
 
+  uint8_t ServerCount;
   bool DnssdEnabled = false;
   std::string Hostname;
   int CataloguePort;
-  ExposedThing *Exposed_Thing[10];
+  ExposedThing *Exposed_Thing[WOT_SERVIENT_MAX_EXPOSED_THING];
   int ExposedThingIndex;
-    ConsumedThing *Consumed_Thing[10];
-    int ConsumedThingIndex;
+  ConsumedThing *Consumed_Thing[10];
+  int ConsumedThingIndex;
   std::string DnsInstanceName;
-  static bool WoTServientGet (std::string RxURI,
-                              Poco::JSON::Object *ThingDesc);
-  static bool WoTServientPut (std::string RxURI,
-                              Poco::JSON::Object::Ptr JsonMeta);
+  static bool WoTServientGet(std::string RxURI, cJSON *ThingDesc);
+  static bool WoTServientPut(std::string RxURI, cJSON *JsonMeta);
   void Start (void);
   void Shutdown (void);
   WoTServient (void);
   void Process (void);
+  void EmitEvent(std::string EventID, cJSON *out);
   void Initialize (int CataloguePort, std::string hostname, bool dns_enabled,
                    std::string dns_instance_name);
   ExposedThing *GetExposedThing (std::string ThingID);

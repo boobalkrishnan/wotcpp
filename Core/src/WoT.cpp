@@ -26,22 +26,22 @@ int WoT::AddThing(ExposedThing *NewThing)
 	MyThings[MyThingCount] = NewThing;
 	// MyThings[MyThingCount]->SetThingNo(MyThingCount);
 	cout << "ExposedThing Add=" << NewThing->id.c_str() << endl;
-	try
+	// try
+	// {
+	if (servient != NULL)
 	{
-		if (servient != NULL)
-		{
-			cout << "servient is not NULL:" <<servient<<endl;
-			servient->AddExposedThing(MyThings[MyThingCount]);
-		}
-		else
-		{
-			cout << "servient is NULL" <<endl;
-		}
+		cout << "servient is not NULL:" <<servient<<endl;
+		servient->AddExposedThing(MyThings[MyThingCount]);
 	}
-	catch (std::exception& e)
+	else
 	{
-		std::cerr << "Exception caught : " << e.what() << std::endl;
+		cout << "servient is NULL" <<endl;
 	}
+	// }
+	// catch (std::exception& e)
+	// {
+	// 	std::cerr << "Exception caught : " << e.what() << std::endl;
+	// }
 	MyThingCount++;
 	return (0);
 }

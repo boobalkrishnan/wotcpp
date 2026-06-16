@@ -1,5 +1,6 @@
 #ifndef WOTTHING_H
 #define WOTTHING_H
+#include <ctime>
 #include "WoTAction.h"
 #include "WoTEvent.h"
 #include "WoTProperty.h"

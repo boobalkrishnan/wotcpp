@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <string>
-#include <Poco/JSON/Object.h>
+#include "cJSON.h"
 #include "Logger.h"
 #include "WoTInteractions.h"
 
@@ -12,7 +12,7 @@ using namespace Logging;
 #define LOGGER_COMP_ACTION "WoTAction"
 
 typedef void (*action_callback_ptr)(void);
-typedef uint8_t (*action_invokecallback_ptr)(std::string ThingId, std::string ActionId, Poco::JSON::Object::Ptr pObject);
+typedef uint8_t (*action_invokecallback_ptr)(std::string ThingId, std::string ActionId, cJSON *pObject);
 typedef void (*action_writecallback_ptr)(std::string ThingId, std::string ActionId, ThingInteractionValue *ActionValue);
 
 
@@ -63,7 +63,7 @@ class ThingAction
         ThingInteractionValueType GetValueType(std::string typeString);
         void InitializeOutputs(uint8_t outputindex, std::string ActionoutputName, std::string outputType,uint8_t outputParamSize);
         void InitializeInputs(uint8_t inputindex, std::string ActioninputName, std::string inputType,uint8_t inputParamSize);  
-        std::string Serialize(Poco::JSON::Object *InActionPtr);
+        std::string Serialize(cJSON *InActionPtr);
         action_invokecallback_ptr action_InvokeHandler;
         action_writecallback_ptr action_WriteHandler;     
 };

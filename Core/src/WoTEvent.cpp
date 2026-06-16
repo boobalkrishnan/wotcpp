@@ -198,6 +198,12 @@ bool ThingEvent::Subscribe(void)
     return(subscribed);
 }
 
+bool ThingEvent::UnSubscribe(void)
+{
+    subscribed = false;
+    return(subscribed);
+}
+
 std::string ThingEvent::GetValueTypeString(void)
 {
     if (ValueType == VAL_BOOLEAN)
@@ -247,7 +253,8 @@ std::string ThingEvent::GetValueTypeString(ThingInteractionValueType valueTypeIn
     }
 }
 
-std::string ThingEvent::Serialize(Poco::JSON::Object *InEventPtr)
+
+std::string ThingEvent::Serialize(cJSON *InEventPtr)
 {
     // std::string RetString = NULL;
     // InActionPtr->set("@type", ActionSchema);
@@ -256,42 +263,27 @@ std::string ThingEvent::Serialize(Poco::JSON::Object *InEventPtr)
     pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_EVENT,"InputSize:", InputSize);
     if (InputSize > 0)
     {
-        Poco::JSON::Object InputSer;
-        Poco::JSON::Object InputPropSer;
-        InputSer.set("type","object");
+        cJSON *InputSer = cJSON_CreateObject();
+        cJSON *InputEvntSer = cJSON_CreateObject();
+        cJSON_AddStringToObject(InputSer,"type","object");
+
         for (uint8_t indexSize=0; indexSize < InputSize; indexSize++)
         {
-            Poco::JSON::Object InputPropItem;
-            InputPropItem.set("type",GetValueTypeString(Inputs[indexSize].ValueType));
-            InputPropSer.set(Inputs[indexSize].title,InputPropItem);
-            pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_EVENT,"type",GetValueTypeString(Inputs[indexSize].ValueType).c_str());
+            cJSON *InputPropItem = cJSON_CreateObject();
+            cJSON_AddStringToObject(InputPropItem,"type",GetValueTypeString(Inputs[indexSize].ValueType).c_str());
+            cJSON_AddItemToObject(InputEvntSer, Inputs[indexSize].title.c_str(),InputPropItem);
         }
-        InputSer.set("properties", InputPropSer);
-        InEventPtr->set("data", InputSer);
-
+        cJSON_AddItemToObject(InputSer,"properties", InputEvntSer);
+        cJSON_AddItemToObject(InEventPtr,"input", InputSer);
     }
     else
     {
         // InActionPtr->set("type", GetValueType());
     }
     return (title);
-    // InEventPtr->set("type", GetValueType());
-    // InEventPtr->set("@type", EventSchema);
-    // InEventPtr->set("title", title);
-    // InEventPtr->set("readOnly", readOnly);
-    // if (ValueType == VAL_NUMBER)
-    // {
-    //     InEventPtr->set("minimum", minimum);
-    //     InEventPtr->set("maximum", maximum);
-    //     if (unit != "none")
-    //     {
-    //         InEventPtr->set("unit", unit);
-    //     }
-    // }
-    // return (title);
 }
 
-std::string ThingEvent::SerializeData(Poco::JSON::Object *InEventPtr)
+std::string ThingEvent::SerializeData(cJSON *InEventPtr)
 {
     // std::string RetString = NULL;
     // InActionPtr->set("@type", ActionSchema);
@@ -300,39 +292,54 @@ std::string ThingEvent::SerializeData(Poco::JSON::Object *InEventPtr)
     pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_EVENT,"InputSize:", InputSize);
     if (InputSize > 0)
     {
-        Poco::JSON::Object InputSer;
-        Poco::JSON::Object InputPropSer;
+        cJSON *InputSer = cJSON_CreateObject();
+        // cJSON *InputEvntSer = cJSON_CreateObject();
         // InputSer.set("type","object");
         for (uint8_t indexSize=0; indexSize < InputSize; indexSize++)
         {
             // Poco::JSON::Object InputPropItem;
             // InputPropItem.set("type",GetValueTypeString(Inputs[indexSize].ValueType));
-            InputPropSer.set(Inputs[indexSize].title,Inputs[indexSize].Value.number);
-            pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_EVENT,"type",GetValueTypeString(Inputs[indexSize].ValueType).c_str());
+            if (Inputs[indexSize].ValueType == VAL_NUMBER)
+            {
+                cJSON_AddNumberToObject(InputSer,Inputs[indexSize].title.c_str(),Inputs[indexSize].Value.number);
+            }
+            else if (Inputs[indexSize].ValueType == VAL_INTEGER)
+            {
+                cJSON_AddNumberToObject(InputSer,Inputs[indexSize].title.c_str(),Inputs[indexSize].Value.integer);
+            }
+            else if (Inputs[indexSize].ValueType == VAL_STRING)
+            {
+                cJSON_AddStringToObject(InputSer,Inputs[indexSize].title.c_str(),Inputs[indexSize].Value.stringin);
+            }
+            else if (Inputs[indexSize].ValueType == VAL_BOOLEAN)
+            {
+                
+                cJSON_AddNumberToObject(InputSer,Inputs[indexSize].title.c_str(),Inputs[indexSize].Value.boolean);
+            }
         }
-        InputSer.set("properties", InputPropSer);
-        InEventPtr->set("data", InputSer);
-
+        // cJSON_AddItemToObject(InputSer,"properties", InputEvntSer);
+        cJSON_AddItemToObject(InEventPtr,"data", InputSer);
     }
     else
     {
-        // InActionPtr->set("type", GetValueType());
+        if (Inputs[0].ValueType == VAL_NUMBER)
+        {
+            cJSON_AddNumberToObject(InEventPtr,Inputs[0].title.c_str(),Inputs[0].Value.number);
+        }
+        else if (Inputs[0].ValueType == VAL_INTEGER)
+        {
+            cJSON_AddNumberToObject(InEventPtr,Inputs[0].title.c_str(),Inputs[0].Value.integer);
+        }
+        else if (Inputs[0].ValueType == VAL_STRING)
+        {
+            cJSON_AddStringToObject(InEventPtr,Inputs[0].title.c_str(),Inputs[0].Value.stringin);
+        }
+        else if (Inputs[0].ValueType == VAL_BOOLEAN)
+        {
+            cJSON_AddNumberToObject(InEventPtr,Inputs[0].title.c_str(),Inputs[0].Value.boolean);
+        }
     }
     return (title);
-    // InEventPtr->set("type", GetValueType());
-    // InEventPtr->set("@type", EventSchema);
-    // InEventPtr->set("title", title);
-    // InEventPtr->set("readOnly", readOnly);
-    // if (ValueType == VAL_NUMBER)
-    // {
-    //     InEventPtr->set("minimum", minimum);
-    //     InEventPtr->set("maximum", maximum);
-    //     if (unit != "none")
-    //     {
-    //         InEventPtr->set("unit", unit);
-    //     }
-    // }
-    // return (title);
 }
 
 ThingEvent::ThingEvent(void)

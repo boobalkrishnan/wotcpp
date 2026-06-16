@@ -275,8 +275,7 @@ ThingAction::GetKeyName (void)
   return (keyname);
 }
 
-std::string
-ThingAction::Serialize (Poco::JSON::Object *InActionPtr)
+std::string ThingAction::Serialize(cJSON *InActionPtr)
 {
   // std::string RetString = NULL;
   // InActionPtr->set("@type", ActionSchema);
@@ -284,18 +283,18 @@ ThingAction::Serialize (Poco::JSON::Object *InActionPtr)
   // InActionPtr->set("readOnly", readOnly);
   if (InputSize > 0)
     {
-      Poco::JSON::Object InputSer;
-      Poco::JSON::Object InputPropSer;
-      InputSer.set ("type", "object");
-      for (uint8_t indexSize = 0; indexSize < InputSize; indexSize++)
+        cJSON *InputSer = cJSON_CreateObject();
+        cJSON *InputPropSer = cJSON_CreateObject();
+        cJSON_AddStringToObject(InputSer,"type","object");
+
+        for (uint8_t indexSize=0; indexSize < InputSize; indexSize++)
         {
-          Poco::JSON::Object InputPropItem;
-          InputPropItem.set ("type",
-                             GetValueTypeString (Inputs[indexSize].ValueType));
-          InputPropSer.set (Inputs[indexSize].title, InputPropItem);
+            cJSON *InputPropItem = cJSON_CreateObject();
+            cJSON_AddStringToObject(InputPropItem,"type",GetValueTypeString(Inputs[indexSize].ValueType).c_str());
+            cJSON_AddItemToObject(InputPropSer, Inputs[indexSize].title.c_str(),InputPropItem);
         }
-      InputSer.set ("properties", InputPropSer);
-      InActionPtr->set ("input", InputSer);
+        cJSON_AddItemToObject(InputSer,"properties", InputPropSer);
+        cJSON_AddItemToObject(InActionPtr,"input", InputSer);
     }
   else
     {

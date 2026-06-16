@@ -11,19 +11,25 @@ void WoTServient::build_default_clients(void)
 {
     // ToDo
 }
-bool WoTServient::WoTServientGet(std::string RxURI, Poco::JSON::Object *ThingDesc)
+bool WoTServient::WoTServientGet(std::string RxURI, cJSON *ThingDesc)
 {
     //return(WoTAdapterGet(RxURI, ThingDesc));
+    return (true);
 }
-bool WoTServient::WoTServientPut(std::string RxURI, Poco::JSON::Object::Ptr JsonMeta)
+bool WoTServient::WoTServientPut(std::string RxURI, cJSON *JsonMeta)
 {
     //return(WoTAdapterPut(RxURI, JsonMeta));
+    return (true);
 }
 
 WoTServient::WoTServient(void)
 {
-    ExposedThingIndex = 0;
-    ConsumedThingIndex = 0;
+
+}
+
+void WoTServient::EmitEvent(std::string EventID, cJSON *out)
+{
+    WoTAdapterRef.EmitEvent(EventID,out);
 }
 
 void WoTServient::Process(void)
@@ -67,7 +73,7 @@ void WoTServient::Start(void)
 
 ExposedThing* WoTServient::GetExposedThing (std::string ThingID)
 {
-    ExposedThing *Exposed_Thing_Rtr;
+    ExposedThing *Exposed_Thing_Rtr=NULL;
     for (int thing_index=0;thing_index < ExposedThingIndex; thing_index++)
     {
         if (Exposed_Thing[thing_index]->id == ThingID)

@@ -1,79 +1,79 @@
-#include "nlohmann/json-schema.hpp"
 #include <fstream>
 #include <iostream>
 #include <string>
-
+#include "cJSON.h"
 #include "WoTProperty.h"
 #include "WoTServient.h"
 #include "WoTTd.h"
 #include "WoTThing.h"
 
-using nlohmann::json;
-using nlohmann::json_uri;
-using nlohmann::json_schema::json_validator;
+// using nlohmann::json;
+// using nlohmann::json_uri;
+// using nlohmann::json_schema::json_validator;
 
-void ThingDescription::TdLoader(const json_uri &uri, json &schema)
+void ThingDescription::TdLoader(const std::string uri, cJSON *schema)
 {
-    std::string filename = "./" + uri.path();
+    std::string filename = "./" + uri;
     std::ifstream lf(filename);
-    if (!lf.good())
-        throw std::invalid_argument("could not open " + uri.url() + " tried with " + filename);
-    try
-    {
-        lf >> schema;
-    }
-    catch (const std::exception &e)
-    {
-        throw e;
-    }
+    // if (!lf.good())
+    //     throw std::invalid_argument("could not open " + uri + " tried with " + filename);
+    // try
+    // {
+    //     lf >> schema;
+    // }
+    // catch (const std::exception &e)
+    // {
+    //     throw e;
+    // }
 }
 
-bool ThingDescription::Validate(json Td)
+bool ThingDescription::Validate(cJSON *Td)
 {
     bool result = false;
     /* json-parse the schema */
 
-    std::ifstream file_schema(
-        "/02_Cpp_NoScript/WoT/Schema/tm-json-schema-validation.json");
-    if (file_schema.is_open())
-    {
-        // std::cout <<"file schema: "<< file_schema.rdbuf()<<std::endl;
-        wot_td_schema = json::parse(file_schema);
-        json_validator validator(
-            TdLoader, nlohmann::json_schema::default_string_format_check);
+    // std::ifstream file_schema(
+    //     "/02_Cpp_NoScript/WoT/Schema/tm-json-schema-validation.json");
+    // if (file_schema.is_open())
+    // {
+    //     // std::cout <<"file schema: "<< file_schema.rdbuf()<<std::endl;
+    //     wot_td_schema = cJSON_Parse(file_schema);
+        
+    //     json_validator validator(
+    //         TdLoader, nlohmann::json_schema::default_string_format_check);
 
-        try
-        {
-            validator.set_root_schema(wot_td_schema); // insert root-schema
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Validation of schema failed, here is why: "
-                      << e.what() << "\n";
-            result = false;
-        }
-        /* json-parse the people - API of 1.0.0, default throwing error handler
-         */
+    //     try
+    //     {
+    //         validator.set_root_schema(wot_td_schema); // insert root-schema
+    //     }
+    //     catch (const std::exception &e)
+    //     {
+    //         std::cerr << "Validation of schema failed, here is why: "
+    //                   << e.what() << "\n";
+    //         result = false;
+    //     }
+    //     /* json-parse the people - API of 1.0.0, default throwing error handler
+    //      */
 
-        // std::cout << "About to validate this Td:\n"
-        //           << std::setw(2) << Td << std::endl;
-        try
-        {
-            validator.validate(Td); // validate the document - uses the default
-                                    // throwing error-handler
-            std::cout << "Validation succeeded\n";
-            result = true;
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Validation failed, here is why: " << e.what() << "\n";
-        }
-    }
-    else
-    {
-        std::cout << "file schema: not found";
-    }
-
+    //     // std::cout << "About to validate this Td:\n"
+    //     //           << std::setw(2) << Td << std::endl;
+    //     try
+    //     {
+    //         validator.validate(Td); // validate the document - uses the default
+    //                                 // throwing error-handler
+    //         std::cout << "Validation succeeded\n";
+    //         result = true;
+    //     }
+    //     catch (const std::exception &e)
+    //     {
+    //         std::cerr << "Validation failed, here is why: " << e.what() << "\n";
+    //     }
+    // }
+    // else
+    // {
+    //     std::cout << "file schema: not found";
+    // }
+    result = true;
     return result;
 }
 
@@ -89,15 +89,15 @@ ThingDescription::ThingDescription(std::string Td)
 {
     /* Convert to JSON */
 
-    try
-    {
-        wot_td = json::parse(Td.c_str());
+    // try
+    // {
+        wot_td = cJSON_Parse(Td.c_str());
         // std::cout << "Received TD" << Td << std::endl;
-    }
-    catch (json::parse_error &ex)
-    {
-        std::cerr << "parse error at byte " << ex.byte << std::endl;
-    }
+    // }
+    // catch (...)
+    // {
+    //     std::cerr << "parse error at byte " << std::endl;
+    // }
 
     td_valid = Validate(wot_td);
 
@@ -111,92 +111,98 @@ ThingDescription::ThingDescription(std::string Td)
     // }
 }
 
-WoTForms
-ThingDescription::ExtractForm(json FormItemFragment)
+void ThingDescription::ExtractForm(cJSON * FormItemFragment, WoTForms *NewForm)
 {
-    WoTForms NewForm;
-    if (FormItemFragment.contains("href"))
+    cJSON *href = cJSON_GetObjectItem(FormItemFragment, "href");
+    if (href)
     {
-        std::cout << "Extracting href: " << FormItemFragment["href"] << "\n";
-        NewForm.href = FormItemFragment["href"];
+        std::cout << "Extracting href: " << href->valuestring << "\n";
+        NewForm->href = href->valuestring;
     }
     else
     {
-        NewForm.href = "";
+        NewForm->href = "";
     }
-    if (FormItemFragment.contains("type"))
+    cJSON *type = cJSON_GetObjectItem(FormItemFragment, "type");
+    if (type)
     {
-        NewForm.type = FormItemFragment["type"];
+        NewForm->type = type->valuestring;
     }
     else
     {
-        NewForm.type = "";
+        NewForm->type = "";
     }
-    if (FormItemFragment.contains("rel"))
+    cJSON *rel = cJSON_GetObjectItem(FormItemFragment, "rel");
+    if (rel)
     {
-        NewForm.rel = FormItemFragment["rel"];
+        NewForm->rel = rel->valuestring;
     }
     else
     {
-        NewForm.rel = "";
+        NewForm->rel = "";
     }
-    if (FormItemFragment.contains("anchor"))
+    cJSON *anchor = cJSON_GetObjectItem(FormItemFragment, "anchor");
+    if (anchor)
     {
-        NewForm.anchor = FormItemFragment["anchor"];
+        NewForm->anchor = anchor->valuestring;
     }
     else
     {
-        NewForm.anchor = "";
+        NewForm->anchor = "";
     }
-    if (FormItemFragment.contains("sizes"))
+    cJSON *sizes = cJSON_GetObjectItem(FormItemFragment, "sizes");
+    if (sizes)
     {
-        NewForm.sizes = FormItemFragment["sizes"];
+        NewForm->sizes = sizes->valuestring;
     }
     else
     {
-        NewForm.sizes = "";
+        NewForm->sizes = "";
     }
-    if (FormItemFragment.contains("hreflang"))
+    cJSON *hreflang = cJSON_GetObjectItem(FormItemFragment, "hreflang");
+    if (hreflang)
     {
-        NewForm.hreflang = FormItemFragment["hreflang"];
+        NewForm->hreflang = hreflang->valuestring;
     }
     else
     {
-        NewForm.hreflang = "";
+        NewForm->hreflang = "";
     }
-    return NewForm;
 }
 
 ThingProperty *
-ThingDescription::build_property(std::string propname, json propItemFragment)
+ThingDescription::build_property(std::string propname, cJSON *propItemFragment)
 {
+    uint8_t fromParamCnt = 0;
     ThingProperty *ThingPropertyNew = new ThingProperty();
 
-    if (propItemFragment["type"] == "object")
+    cJSON *type = cJSON_GetObjectItem(propItemFragment, "type");
+    if (type && strcmp(type->valuestring, "object") == 0)
     {
-        json propObjItem;
+        cJSON *properties = cJSON_GetObjectItem(propItemFragment, "properties");
         uint8_t propParamCnt = 0;
 
-        propObjItem = propItemFragment["properties"];
-        for (const auto &item : propObjItem.items())
+        for (cJSON *item = properties->child; item != NULL; item = item->next)
         {
-            std::string PropertyValType = item.value()["type"];
-            std::cout << item.key() << ":" << item.value()["type"] << ":" << item.value()["readOnly"] << "\n";
-            ThingPropertyNew->Initialize(item.key(), propname, PropertyValType, item.value()["readOnly"]);
+            cJSON *itemType = cJSON_GetObjectItem(item, "type");
+            cJSON *readOnly = cJSON_GetObjectItem(item, "readOnly");
+            std::string PropertyValType = itemType ? itemType->valuestring : "";
+            std::cout << item->string << ":" << PropertyValType << ":" << (readOnly ? readOnly->valueint : 0) << "\n";
+            ThingPropertyNew->Initialize(item->string, propname, PropertyValType, readOnly ? readOnly->valueint : 0);
             propParamCnt++;
         }
     }
     else
     {
-        json formObjItem;
-        uint8_t fromParamCnt = 0;
-        std::cout << propItemFragment["title"] << ":" << propItemFragment["type"] << ":" << propItemFragment["readOnly"] << "\n";
-        std::string PropertyValType = propItemFragment["type"];
-        ThingPropertyNew->Initialize(propItemFragment["title"], PropertyValType, propItemFragment["readOnly"]);
-        formObjItem = propItemFragment["forms"];
-        for (const auto &item : formObjItem.items())
+        cJSON *title = cJSON_GetObjectItem(propItemFragment, "title");
+        cJSON *readOnly = cJSON_GetObjectItem(propItemFragment, "readOnly");
+        std::cout << (title ? title->valuestring : "") << ":" << (type ? type->valuestring : "") << ":" << (readOnly ? readOnly->valueint : 0) << "\n";
+        std::string PropertyValType = type ? type->valuestring : "";
+        ThingPropertyNew->Initialize(title ? title->valuestring : "", PropertyValType, readOnly ? readOnly->valueint : 0);
+        cJSON *forms = cJSON_GetObjectItem(propItemFragment, "forms");
+        if (forms)
         {
-            ThingPropertyNew->form[fromParamCnt] = ExtractForm(item.value());
+            ExtractForm(forms, &ThingPropertyNew->form[fromParamCnt]);
             fromParamCnt++;
         }
     }
@@ -204,36 +210,41 @@ ThingDescription::build_property(std::string propname, json propItemFragment)
 }
 
 ThingAction *
-ThingDescription::build_action(std::string actnname, json actnItemFragment)
+ThingDescription::build_action(std::string actnname, cJSON * actnItemFragment)
 {
-    json actnObjItem;
+    cJSON *actnObjItem;
     uint8_t actnInParamCnt = 0;
     uint8_t actnOutParamCnt = 0;
 
     ThingAction *ThingActionNew = new ThingAction();
-    if (actnItemFragment.contains("input"))
+    if (cJSON_GetObjectItem(actnItemFragment, "input"))
     {
-        if (actnItemFragment["input"]["type"] == "object")
+        if (cJSON_GetObjectItem(actnItemFragment, "input") && strcmp(cJSON_GetObjectItem(cJSON_GetObjectItem(actnItemFragment, "input"), "type")->valuestring, "object") == 0)
         {
-            actnObjItem = actnItemFragment["input"]["properties"];
-            for (const auto &item : actnObjItem.items())
+            actnObjItem = cJSON_GetObjectItem(cJSON_GetObjectItem(actnItemFragment, "input"), "properties");
+            for (cJSON *item = actnObjItem->child; item != NULL; item = item->next)
             {
-                std::string ActionValType = item.value()["type"];
-                std::cout << item.key() << ":" << item.value()["type"] << ":"
-                          << item.value()["readOnly"] << "\n";
+                cJSON *itemType = cJSON_GetObjectItem(item, "type");
+                cJSON *readOnly = cJSON_GetObjectItem(item, "readOnly");
+                std::string ActionValType = itemType ? itemType->valuestring : "";
+                std::cout << item->string << ":" << ActionValType << ":" << (readOnly ? readOnly->valueint : 0) << "\n";
                 ThingActionNew->InitializeInputs(actnInParamCnt, actnname,
                                                  ActionValType, 4);
                 actnInParamCnt++;
             }
         }
-        else if (actnItemFragment["input"]["type"] != NULL)
+        else if (cJSON_GetObjectItem(cJSON_GetObjectItem(actnItemFragment, "input"), "type"))
         {
-            std::cout << actnItemFragment["input"]["title"] << ":"
-                      << actnItemFragment["input"]["type"] << ":"
-                      << actnItemFragment["input"]["readOnly"] << "\n";
-            std::string ActionValType = actnItemFragment["input"]["type"];
+            cJSON *input = cJSON_GetObjectItem(actnItemFragment, "input");
+            cJSON *title = cJSON_GetObjectItem(input, "title");
+            cJSON *type = cJSON_GetObjectItem(input, "type");
+            cJSON *readOnly = cJSON_GetObjectItem(input, "readOnly");
+            std::cout << (title ? title->valuestring : "") << ":"
+                      << (type ? type->valuestring : "") << ":"
+                      << (readOnly ? readOnly->valueint : 0) << "\n";
+            std::string ActionValType = type ? type->valuestring : "";
             ThingActionNew->InitializeInputs(actnInParamCnt,
-                                             actnItemFragment["input"]["title"],
+                                             title ? title->valuestring : "",
                                              ActionValType, 4);
             actnInParamCnt = 1;
         }
@@ -242,30 +253,35 @@ ThingDescription::build_action(std::string actnname, json actnItemFragment)
     {
         actnInParamCnt = 0;
     }
-    if (actnItemFragment.contains("output"))
+    if (cJSON_GetObjectItem(actnItemFragment, "output"))
     {
-        if (actnItemFragment["output"]["type"] == "object")
+        if (cJSON_GetObjectItem(cJSON_GetObjectItem(actnItemFragment, "output"), "type") && strcmp(cJSON_GetObjectItem(cJSON_GetObjectItem(actnItemFragment, "output"), "type")->valuestring, "object") == 0)
         {
-            actnObjItem = actnItemFragment["output"]["properties"];
-            for (const auto &item : actnObjItem.items())
+            actnObjItem = cJSON_GetObjectItem(cJSON_GetObjectItem(actnItemFragment, "output"), "properties");
+            for (cJSON *item = actnObjItem->child; item != NULL; item = item->next)
             {
-                std::string ActionValType = item.value()["type"];
-                std::cout << item.key() << ":" << item.value()["type"] << ":"
-                          << item.value()["readOnly"] << "\n";
+                cJSON *itemType = cJSON_GetObjectItem(item, "type");
+                cJSON *readOnly = cJSON_GetObjectItem(item, "readOnly");
+                std::string ActionValType = itemType ? itemType->valuestring : "";
+                std::cout << item->string << ":" << ActionValType << ":" << (readOnly ? readOnly->valueint : 0) << "\n";
                 ThingActionNew->InitializeOutputs(actnOutParamCnt, actnname,
                                                   ActionValType, 4);
                 actnOutParamCnt++;
             }
         }
-        else if (actnItemFragment["output"]["type"] != NULL)
+        else if (cJSON_GetObjectItem(cJSON_GetObjectItem(actnItemFragment, "output"), "type"))
         {
-            std::cout << actnItemFragment["output"]["title"] << ":"
-                      << actnItemFragment["output"]["type"] << ":"
-                      << actnItemFragment["output"]["readOnly"] << "\n";
-            std::string ActionValType = actnItemFragment["output"]["type"];
+            cJSON *output = cJSON_GetObjectItem(actnItemFragment, "output");
+            cJSON *title = cJSON_GetObjectItem(output, "title");
+            cJSON *type = cJSON_GetObjectItem(output, "type");
+            cJSON *readOnly = cJSON_GetObjectItem(output, "readOnly");
+            std::cout << (title ? title->valuestring : "") << ":"
+                      << (type ? type->valuestring : "") << ":"
+                      << (readOnly ? readOnly->valueint : 0) << "\n";
+            std::string ActionValType = type ? type->valuestring : "";
             ThingActionNew->InitializeOutputs(
-                actnOutParamCnt, actnItemFragment["output"]["title"],
-                ActionValType, actnItemFragment["output"]["readOnly"]);
+                actnOutParamCnt, title ? title->valuestring : "",
+                ActionValType, readOnly ? readOnly->valueint : 0);
             actnOutParamCnt = 1;
         }
     }
@@ -278,36 +294,41 @@ ThingDescription::build_action(std::string actnname, json actnItemFragment)
 }
 
 ThingEvent *
-ThingDescription::build_event(std::string evntname, json evntItemFragment)
+ThingDescription::build_event(std::string evntname, cJSON *evntItemFragment)
 {
-    json evntObjItem;
+    cJSON *evntObjItem;
     uint8_t evntInParamCnt = 0;
     uint8_t evntOutParamCnt = 0;
 
     ThingEvent *ThingEventNew = new ThingEvent();
 
-    if (evntItemFragment["input"]["type"] == "object")
+    if (cJSON_GetObjectItem(cJSON_GetObjectItem(evntItemFragment, "input"), "type") && strcmp(cJSON_GetObjectItem(cJSON_GetObjectItem(evntItemFragment, "input"), "type")->valuestring, "object") == 0)
     {
-        evntObjItem = evntItemFragment["input"]["properties"];
-        for (const auto &item : evntObjItem.items())
+        evntObjItem = cJSON_GetObjectItem(cJSON_GetObjectItem(evntItemFragment, "input"), "properties");
+        for (cJSON *item = evntObjItem->child; item != NULL; item = item->next)
         {
-            std::string ActionValType = item.value()["type"];
-            std::cout << item.key() << ":" << item.value()["type"] << ":"
-                      << item.value()["readOnly"] << "\n";
-            ThingEventNew->InitializeInputs(evntInParamCnt, item.key(),
-                                            ActionValType, 4);
+            cJSON *itemType = cJSON_GetObjectItem(item, "type");
+            cJSON *readOnly = cJSON_GetObjectItem(item, "readOnly");
+            std::string ActionValType = itemType ? itemType->valuestring : "";
+            std::cout << item->string << ":" << ActionValType << ":" << (readOnly ? readOnly->valueint : 0) << "\n";
+            ThingEventNew->InitializeInputs(evntInParamCnt, item->string,
+                                            ActionValType, readOnly ? readOnly->valueint : 0);
             evntInParamCnt++;
         }
     }
-    else if (evntItemFragment["input"]["type"] != NULL)
+    else if (cJSON_GetObjectItem(cJSON_GetObjectItem(evntItemFragment, "input"), "type"))
     {
-        std::cout << evntItemFragment["input"]["title"] << ":"
-                  << evntItemFragment["input"]["type"] << ":"
-                  << evntItemFragment["input"]["readOnly"] << "\n";
-        std::string ActionValType = evntItemFragment["input"]["type"];
+        cJSON *input = cJSON_GetObjectItem(evntItemFragment, "input");
+        cJSON *title = cJSON_GetObjectItem(input, "title");
+        cJSON *type = cJSON_GetObjectItem(input, "type");
+        cJSON *readOnly = cJSON_GetObjectItem(input, "readOnly");
+        std::cout << (title ? title->valuestring : "") << ":"
+                  << (type ? type->valuestring : "") << ":"
+                  << (readOnly ? readOnly->valueint : 0) << "\n";
+        std::string ActionValType = type ? type->valuestring : "";
         ThingEventNew->InitializeInputs(evntInParamCnt,
-                                        evntItemFragment["input"]["title"],
-                                        ActionValType, 4);
+                                        title ? title->valuestring : "",
+                                        ActionValType, readOnly ? readOnly->valueint : 0);
         evntInParamCnt = 1;
     }
 
@@ -319,25 +340,25 @@ ExposedThing *
 ThingDescription::build_exposedThing(void)
 {
     ExposedThing *ExposedThingTemp = new ExposedThing();
-    ExposedThingTemp->Initialize(0, wot_td["id"], wot_td["title"],
-                                 wot_td["@type"]);
+    // ExposedThingTemp->Initialize(0, cJSON_GetObjectItem(wot_td, "id"), cJSON_GetObjectItem(wot_td, "title"),
+    //                              cJSON_GetObjectItem(wot_td, "@type"));
 
-    for (const auto &item : wot_td["properties"].items())
-    {
-        std::cout << item.key() << "\n";
-        ExposedThingTemp->addProperty(
-            build_property(item.key(), item.value()));
-    }
-    for (const auto &item : wot_td["actions"].items())
-    {
-        std::cout << item.key() << "\n";
-        ExposedThingTemp->addAction(build_action(item.key(), item.value()));
-    }
-    for (const auto &item : wot_td["events"].items())
-    {
-        std::cout << item.key() << "\n";
-        ExposedThingTemp->addEvent(build_event(item.key(), item.value()));
-    }
+    // for (const auto &item : cJSON_GetObjectItem(wot_td, "properties")->child)
+    // {
+    //     std::cout << item->string << "\n";
+    //     ExposedThingTemp->addProperty(
+    //         build_property(item->string, item));
+    // }
+    // for (const auto &item : cJSON_GetObjectItem(wot_td, "actions")->child)
+    // {
+    //     std::cout << item->string << "\n";
+    //     ExposedThingTemp->addAction(build_action(item->string, item));
+    // }
+    // for (const auto &item : cJSON_GetObjectItem(wot_td, "events")->child)
+    // {
+    //     std::cout << item->string << "\n";
+    //     ExposedThingTemp->addEvent(build_event(item->string, item));
+    // }
     return (ExposedThingTemp);
 }
 
@@ -345,23 +366,23 @@ ConsumedThing *
 ThingDescription::build_consumedThing(void)
 {
     ConsumedThing *ConsumedThingTemp = new ConsumedThing();
-    ConsumedThingTemp->Initialize(0, wot_td["id"], wot_td["title"],
-                                  wot_td["@type"]);
-    // ConsumedThingTemp->Servient = servientIn;
-    for (const auto &item : wot_td["properties"].items())
-    {
-        std::cout << item.key() << "\n";
-        uint8_t ProIndex = ConsumedThingTemp->addProperty(build_property(item.key(), item.value()));
-    }
-    for (const auto &item : wot_td["actions"].items())
-    {
-        std::cout << item.key() << "\n";
-        ConsumedThingTemp->addAction(build_action(item.key(), item.value()));
-    }
-    for (const auto &item : wot_td["events"].items())
-    {
-        std::cout << item.key() << "\n";
-        ConsumedThingTemp->addEvent(build_event(item.key(), item.value()));
-    }
+    // ConsumedThingTemp->Initialize(0, cJSON_GetObjectItem(wot_td, "id"), cJSON_GetObjectItem(wot_td, "title"),
+    //                               cJSON_GetObjectItem(wot_td, "@type"));
+    // // ConsumedThingTemp->Servient = servientIn;
+    // for (const auto &item : cJSON_GetObjectItem(wot_td, "properties")->child)
+    // {
+    //     std::cout << item->string << "\n";
+    //     uint8_t ProIndex = ConsumedThingTemp->addProperty(build_property(item->string, item));
+    // }
+    // for (const auto &item : cJSON_GetObjectItem(wot_td, "actions")->child)
+    // {
+    //     std::cout << item->string << "\n";
+    //     ConsumedThingTemp->addAction(build_action(item->string, item));
+    // }
+    // for (const auto &item : cJSON_GetObjectItem(wot_td, "events")->child)
+    // {
+    //     std::cout << item->string << "\n";
+    //     ConsumedThingTemp->addEvent(build_event(item->string, item));
+    // }
     return (ConsumedThingTemp);
 }

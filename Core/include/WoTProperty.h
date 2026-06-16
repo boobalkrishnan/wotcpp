@@ -3,7 +3,7 @@
 
 #include "Logger.h"
 #include "WoTInteractions.h"
-#include <Poco/JSON/Object.h>
+#include "cJSON.h"
 #include <iostream>
 #include <string>
 using namespace Logging;
@@ -116,7 +116,7 @@ public:
   void Initialize (std::string propTitle, std::string propType, bool readonly);
   uint8_t Initialize (std::string ParameterName, std::string propTitle,
                       std::string propValType, bool readonly);
-  std::string Serialize (Poco::JSON::Object *InPropertyPtr);
+  std::string Serialize (cJSON *InPropertyPtr);
   prop_readcallback_ptr prop_ReadHandler;
   prop_writecallback_ptr prop_WriteHandler;
   // void Set(bool NewValue);

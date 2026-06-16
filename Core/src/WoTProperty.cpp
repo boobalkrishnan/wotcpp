@@ -145,9 +145,31 @@ void ThingProperty::Initialize(std::string propTitle, std::string propValType, b
 {
     PropParameterSize = 1;
     title = propTitle;
-    values[0].readOnly = readonly;
-    pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_PROPERTY,
-                      "Initialize called for non object type:", title.c_str());
+    if (propTitle == "temperature")
+    {
+        atType = "saref:Temperature";
+    }
+    else if (propTitle == "humidity")
+    {
+        atType = "saref:Humidity";
+    }
+    else if (propTitle == "door")
+    {
+        atType = "saref:Door";
+    }
+    else if (propTitle == "motion")
+    {
+        atType = "saref:Motion";
+    }
+    else if (propTitle == "ColorTemperature")
+    {
+        atType = "saref:ColorTemperature";
+    }
+    else if (propTitle == "Illuminance")
+    {
+        atType = "saref:Light";
+    }
+    pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_PROPERTY,"Initialize called for non object type:",title.c_str());
     if (propValType == "boolean")
     {
         values[0].ValueType = VAL_BOOLEAN;
@@ -198,6 +220,7 @@ ThingProperty::FindParamIndex(std::string ParameterName)
             break;
         }
     }
+    return (retVal);
 }
 
 uint8_t
@@ -248,6 +271,7 @@ ThingProperty::Initialize(std::string ParameterName, std::string propTitle,
         values[PropParameterSize].name = ParameterName;
     }
     PropParameterSize++;
+    return(PropParameterSize);
 }
 // void ThingProperty::Set(bool NewValue)
 // {
@@ -310,7 +334,7 @@ ThingProperty::GetValueTypeString(void)
     {
         return ("object");
     }
-    else if (values[0].ValueType == VAL_NO_STATE)
+    else
     {
         return ("number");
     }
@@ -339,7 +363,7 @@ ThingProperty::GetValueTypeString(ThingInteractionValueType ValueType)
     {
         return ("object");
     }
-    else if (ValueType == VAL_NO_STATE)
+    else
     {
         return ("number");
     }
@@ -351,31 +375,28 @@ ThingProperty::GetKeyName(void)
     return (keyname);
 }
 
-std::string
-ThingProperty::Serialize(Poco::JSON::Object *InPropertyPtr)
+std::string ThingProperty::Serialize(cJSON *InPropertyPtr)
 {
-    // InPropertyPtr->set("@type", atType);
-    InPropertyPtr->set("title", title);
-    pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_PROPERTY,
-                      "Serialize called for propTitle:", title.c_str());
+    cJSON_AddStringToObject(InPropertyPtr,"title", title.c_str());
+    cJSON_AddStringToObject(InPropertyPtr,"@type", atType.c_str());
+    pLogger->PrintLog(LOG_LEVEL_DEBUG, LOGGER_COMP_PROPERTY,"Serialize called for propTitle:",title.c_str());
     if (PropParameterSize > 1)
     {
-        Poco::JSON::Object InputPropSer;
-        InPropertyPtr->set("type", "object");
-        for (uint8_t indexSize = 0; indexSize < PropParameterSize; indexSize++)
+        cJSON *InputPropSer = cJSON_CreateObject();
+        cJSON_AddStringToObject(InPropertyPtr,"type","object");
+        for (uint8_t indexSize=0; indexSize < PropParameterSize; indexSize++)
         {
-            Poco::JSON::Object InputPropItem;
-            InputPropItem.set("type",
-                              GetValueTypeString(values[indexSize].ValueType));
-            InputPropSer.set(values[indexSize].name, InputPropItem);
+            cJSON *InputPropItem = cJSON_CreateObject();
+            cJSON_AddStringToObject(InputPropItem,"type",GetValueTypeString(values[indexSize].ValueType).c_str());
+            cJSON_AddItemToObject(InputPropSer, values[indexSize].name.c_str(),InputPropItem);
         }
-        InPropertyPtr->set("properties", InputPropSer);
+        cJSON_AddItemToObject(InPropertyPtr,"properties", InputPropSer);
     }
     else
     {
-        InPropertyPtr->set("type", GetValueTypeString());
-        InPropertyPtr->set("readOnly", values[0].readOnly);
-        InPropertyPtr->set("writeOnly", false);
+        cJSON_AddStringToObject(InPropertyPtr,"type", GetValueTypeString().c_str());
+        // cJSON_AddStringToObject(InPropertyPtr,"readOnly", values[0].readOnly.c_str());
+        cJSON_AddItemToObject(InPropertyPtr, "writeOnly", cJSON_CreateFalse());
     }
     return (title);
 }

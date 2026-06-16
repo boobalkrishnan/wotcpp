@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <string>
-#include <Poco/JSON/Object.h>
+#include "cJSON.h"
 
 #include "Logger.h"
 #include "WoTInteractions.h"
@@ -115,9 +115,10 @@ class ThingEvent
         void InitializeOutputs(uint8_t outputindex, std::string EventoutputName, std::string outputType,uint8_t outputParamSize);
         void InitializeInputs(uint8_t inputindex, std::string EventinputName, std::string inputType,uint8_t inputParamSize);  
         bool Subscribed(void);
+        bool UnSubscribe(void);
         bool Subscribe(void);
-        std::string Serialize(Poco::JSON::Object *InEventPtr);
-        std::string SerializeData(Poco::JSON::Object *InEventPtr);
+        std::string Serialize(cJSON *InEventPtr);
+        std::string SerializeData(cJSON *InEventPtr);
         event_readcallback_ptr Event_ReadHandler;
         event_writecallback_ptr Event_WriteHandler;
 };

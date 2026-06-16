@@ -2,7 +2,7 @@
 #define WOTTD
 
 #include "WoTThing.h"
-#include "nlohmann/json-schema.hpp"
+#include "cJSON.h"
 #include <variant>
 // #include "Schema.h"
 #include "Logger.h"
@@ -10,9 +10,11 @@
 #include "WoTEvent.h"
 #include "WoTProperty.h"
 
-using nlohmann::json;
-using nlohmann::json_uri;
-using nlohmann::json_schema::json_validator;
+// using nlohmann::json;
+// using nlohmann::json_uri;
+// using nlohmann::json_schema::json_validator;
+
+using namespace std;
 using namespace Logging;
 
 #define LOGGER_COMP_TD "ThingDescription"
@@ -41,14 +43,14 @@ public:
                             // based on a default language.
   std::string descriptions; // Can be used to support (human-readable)
                             // information in different languages.
-  std::any constVal;
-  std::any defaultVal;
-  std::string unit;
-  std::any enumVal;
-  bool readOnly;    //
-  bool writeOnly;   //
-  std::string type; //
-  std::any value;
+  // std::any constVal;
+  // std::any defaultVal;
+  // std::string unit;
+  // std::any enumVal;
+  // bool readOnly;    //
+  // bool writeOnly;   //
+  // std::string type; //
+  // std::any value;
 };
 
 class WoTSchemaArray : public WoTSchemaData
@@ -61,7 +63,7 @@ private:
   std::string exposedFields[3] = {};
 
 public:
-  std::vector<std::any> items;
+  // std::vector<std::any> items;
   uint8_t maxItems;
   uint8_t minItems;
 };
@@ -95,11 +97,11 @@ private:
   std::string exposedFields[5] = {};
 
 public:
-  std::any minimum;
-  std::any exclusiveMin;
-  std::any maximum;
-  std::any exclusiveMax;
-  std::any multipleOf;
+  // std::any minimum;
+  // std::any exclusiveMin;
+  // std::any maximum;
+  // std::any exclusiveMax;
+  // std::any multipleOf;
 };
 
 class WoTSchemaObject : public WoTSchemaData
@@ -112,10 +114,10 @@ private:
   std::string exposedFields[2] = {};
 
 public:
-  std::vector<std::any>
-      properties; // Data schema nested definitions; Map of DataSchema
-  std::vector<std::any> required; // Defines which members of the object type
-                                  // are mandatory; Array of string
+  // std::vector<std::any>
+  //     properties; // Data schema nested definitions; Map of DataSchema
+  // std::vector<std::any> required; // Defines which members of the object type
+  //                                 // are mandatory; Array of string
 };
 
 class WoTInteractionAffordance
@@ -263,18 +265,18 @@ private:
 public:
   std::string context;
   std::string atType;
-  json wot_td_schema;
+  cJSON *wot_td_schema;
   bool td_valid = false;
-  json wot_td;
+  cJSON *wot_td;
   Logger *pLogger = NULL; // Create the object pointer for Logger Class
   ThingDescription (std::string Td);
-  static void TdLoader (const json_uri &uri, json &schema);
+  static void TdLoader (const std::string uri, cJSON *schema);
   // bool Validate(std::string Td, std::string TdSchema);
-  bool Validate (json Td);
-  WoTForms ExtractForm (json FormItemFragment);
-  ThingProperty *build_property (std::string propname, json propItemFragment);
-  ThingAction *build_action (std::string actnname, json actnItemFragment);
-  ThingEvent *build_event (std::string evntname, json evntItemFragment);
+  bool Validate (cJSON *Td);
+  void ExtractForm (cJSON *FormItemFragment, WoTForms *NewForm);
+  ThingProperty *build_property (std::string propname, cJSON *propItemFragment);
+  ThingAction *build_action (std::string actnname, cJSON *actnItemFragment);
+  ThingEvent *build_event (std::string evntname, cJSON *evntItemFragment);
   ExposedThing *build_exposedThing (void);
   ConsumedThing *build_consumedThing (void);
   // Thing BuildThing(void);

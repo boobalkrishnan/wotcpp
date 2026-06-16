@@ -1,5 +1,3 @@
-#include <Poco/UUID.h>
-#include <Poco/UUIDGenerator.h>
 #include <iostream>
 #include <string>
 
@@ -12,8 +10,8 @@
 #include "WoTThing.h"
 
 using namespace std;
-using Poco::UUID;
-using Poco::UUIDGenerator;
+// using Poco::UUID;
+// using Poco::UUIDGenerator;
 
 /**
  * This constructor initializes the Thing class object
@@ -277,6 +275,7 @@ ThingInteractionValueType ConsumedThing::ReadProperty(std::string property,
             cout << "property_readcallback:NULL" << endl;
         }
     } 
+    return (Thing_Property[prop_index]->values[0].ValueType);
 };
 
 void ConsumedThing::SubscribeEvent(std::string EventID)
